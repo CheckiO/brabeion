@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils import timezone
 
@@ -32,3 +33,10 @@ class BadgeAward(models.Model):
     @property
     def progress(self):
         return self._badge.progress(self.user, self.level)
+
+    @property
+    def logo_normal(self):
+        return self._badge.levels[self.level].logo_own_middle
+
+    def get_absolute_url(self):
+        return reverse('brabeion:badge_detail', args=(self.slug, self.level+1))

@@ -8,14 +8,33 @@ class BadgeAwarded(object):
         self.user = user
 
 
+def url_to_badge(category, size, filename):
+    return '/static/imgv3/badges/{0}/{1}/{2}'.format(category, size, filename)
+
+
 class BadgeDetail(object):
-    def __init__(self, name=None, description=None):
+    def __init__(self, name=None, description=None, badge_filename=None, difficulty=None):
         self.name = name
         self.description = description
+        self.difficulty = difficulty
+        self.logo_own_little = url_to_badge('user', 32, badge_filename)
+        self.logo_own_middle = url_to_badge('user', 48, badge_filename)
+        self.logo_own_big = url_to_badge('user', 64, badge_filename)
+        self.logo_competitor_little = url_to_badge('competitor', 32, badge_filename)
+        self.logo_competitor_middle = url_to_badge('competitor', 48, badge_filename)
+        self.logo_competitor_big = url_to_badge('competitor', 64, badge_filename)
+        self.logo_both_little = url_to_badge('both', 32, badge_filename)
+        self.logo_both_middle = url_to_badge('both', 48, badge_filename)
+        self.logo_both_big = url_to_badge('both', 64, badge_filename)
+        self.logo_disabled_little = url_to_badge('disabled', 32, badge_filename)
+        self.logo_disabled_middle = url_to_badge('disabled', 48, badge_filename)
+        self.logo_disabled_big = url_to_badge('disabled', 64, badge_filename)
 
 
 class Badge(object):
     async = False
+    multiple = False
+    slug = None
 
     def __init__(self):
         assert not (self.multiple and len(self.levels) > 1)
@@ -40,29 +59,31 @@ class Badge(object):
         """
         Does the actual work of possibly awarding a badge.
         """
-        user = state["user"]
-        force_timestamp = state.pop("force_timestamp", None)
         awarded = self.award(**state)
         if awarded is None:
             return
+        user = awarded.user
         if awarded.level is None:
             assert len(self.levels) == 1
             awarded.level = 1
         # awarded levels are 1 indexed, for conveineince
         awarded = awarded.level - 1
         assert awarded < len(self.levels)
-        if (
-            not self.multiple and
-            BadgeAward.objects.filter(user=user, slug=self.slug, level=awarded)
-        ):
-            return
         extra_kwargs = {}
+        force_timestamp = state.pop("force_timestamp", None)
         if force_timestamp is not None:
             extra_kwargs["awarded_at"] = force_timestamp
-        badge = BadgeAward.objects.create(
-            user=user, slug=self.slug,
-            level=awarded, **extra_kwargs)
-        badge_awarded.send(sender=self, badge_award=badge)
+
+        for level in range(awarded, -1, -1):
+            created = True
+            if self.multiple:
+                badge = BadgeAward.objects.create(
+                    user=user, slug=self.slug, level=level, **extra_kwargs)
+            else:
+                badge, created = BadgeAward.objects.get_or_create(
+                    user=user, slug=self.slug, level=level, **extra_kwargs)
+            if created:
+                badge_awarded.send(sender=self, badge_award=badge)
 
     def freeze(self, **state):
         return state

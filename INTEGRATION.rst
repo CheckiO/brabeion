@@ -3,6 +3,7 @@ brabeion integration to CheckiO
 base.py changes:
 - Badge object:
     - slug is None by default
+    - groups is None by default
     - multiple is False by default
     
 - BadgeDetail object:
@@ -25,6 +26,11 @@ base.py changes:
     - use of get_or_create when creating badge (IntegrityError fix)
     - badge awarding goes all lower levels of same badge as well
 
+
+internals.py changes:
+BadgeCache object:
+    - award_badges(group, state) method added for check all badges from provided group
+
 models.py changes:
 - BadgeAward model:
     - added property logo_normal
@@ -32,6 +38,8 @@ models.py changes:
 
 urls.py changes:
 - removed badge_list
+- updated badge_detail (possible use of "-")
+
 
 views.py changes:
 - badge_detail view:

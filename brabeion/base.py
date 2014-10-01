@@ -35,6 +35,7 @@ class Badge(object):
     async = False
     multiple = False
     slug = None
+    groups = None
 
     def __init__(self):
         assert not (self.multiple and len(self.levels) > 1)

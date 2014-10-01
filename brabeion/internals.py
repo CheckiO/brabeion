@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from brabeion.base import Badge
 
 
@@ -11,6 +13,7 @@ class BadgeCache(object):
     """
     def __init__(self):
         self._event_registry = {}
+        self._group_registry = defaultdict(list)
         self._registry = {}
 
     def register(self, badge):
@@ -21,11 +24,17 @@ class BadgeCache(object):
         self._registry[badge.slug] = badge
         for event in badge.events:
             self._event_registry.setdefault(event, []).append(badge)
+            if not badge.groups:
+                continue
+            for group in badge.groups:
+                self._group_registry[group].append(event)
 
     def possibly_award_badge(self, event, **state):
         if event in self._event_registry:
             for badge in self._event_registry[event]:
                 badge.possibly_award(**state)
 
+    def award_badges(self, group, state):
+        [self.possibly_award_badge(event, **state) for event in badges._group_registry[group]]
 
 badges = BadgeCache()

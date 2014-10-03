@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django.db.models import Count
+from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -40,7 +41,13 @@ def badge_list(request):
 
 def badge_detail(request, slug, level):
 
-    badge = badges._registry[slug].levels[int(level)]
+    level = int(level) - 1
+    if level < 0:
+        raise Http404
+    try:
+        badge = badges._registry[slug].levels[level]
+    except (KeyError, IndexError):
+        raise Http404
 
     badge_awards = BadgeAward.objects.filter(
         slug=slug,

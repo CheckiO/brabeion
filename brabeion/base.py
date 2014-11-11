@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from brabeion.models import BadgeAward
 from brabeion.signals import badge_awarded
 
@@ -9,7 +11,9 @@ class BadgeAwarded(object):
 
 
 def url_to_badge(category, size, filename):
-    return '/static/imgv3/badges/{0}/{1}/{2}'.format(category, size, filename)
+    # TODO: remove imgv3 from this app
+    static_url = settings.STATIC_URL.rstrip('/')
+    return '/'.join([static_url, 'imgv3', 'badges', category, str(size), filename])
 
 
 class BadgeDetail(object):
